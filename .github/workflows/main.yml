@@ -1,0 +1,39 @@
+name: Run tests
+
+on:
+  push:
+    branches: [ master ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+      - name: Run tests
+        id: tests
+        run: python ./tests.py
+        continue-on-error: true
+      - name: Send success telegram message
+        if: steps.tests.outcome == 'success'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            Tests passed successfully!
+            See changes: https://github.com/${{ github.repository }}/commit/${{github.sha}}
+      - name: Send failure telegram message
+        if: steps.tests.outcome == 'failure'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            Tests failed!
+            See changes: https://github.com/${{ github.repository }}/commit/${{github.sha}}
